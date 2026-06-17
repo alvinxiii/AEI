@@ -55,6 +55,8 @@ def _run_session_insights(commit_id: str, repo: Optional[str]) -> Dict:
             cwd=repo or _REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
     except FileNotFoundError as exc:
         raise RuntimeError("python executable not found to run session_insights") from exc

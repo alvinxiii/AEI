@@ -370,6 +370,8 @@ def get_commit_diff(commit_id: str, repo: Optional[str] = None) -> str:
             cwd=repo,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
     except FileNotFoundError as exc:  # git not installed / not on PATH
         raise RuntimeError("git executable not found on PATH") from exc
@@ -380,20 +382,50 @@ def get_commit_diff(commit_id: str, repo: Optional[str] = None) -> str:
     return proc.stdout
 
 
+def get_range_diff(base: str, head: str, repo: Optional[str] = None) -> str:
+    """
+    Return the unified diff for a PR range via `git diff base...head` (the
+    changes on `head` since it diverged from `base`).
+    """
+    cmd = ["git", "diff", "--no-color", f"{base}...{head}"]
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("git executable not found on PATH") from exc
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"git diff {base}...{head} failed: {proc.stderr.strip() or 'unknown error'}"
+        )
+    return proc.stdout
+
+
 def scan_commit(
     commit_id: str,
     benchmark_responses: Optional[Sequence[Union[str, Dict]]] = None,
     repo: Optional[str] = None,
+    base: Optional[str] = None,
 ) -> Dict[str, object]:
     """
-    Convenience wrapper: resolve a commit's diff and run the governance scan.
+    Convenience wrapper: resolve a change's diff and run the governance scan.
 
-    This is the entry point AEI uses when it is handed a commit ID -- it fetches
-    the diff itself so the caller never has to wrangle `git`.
+    This is the entry point AEI uses. With `base`, it scans the whole PR range
+    (`base...commit_id`); without it, it scans the single commit. Either way the
+    caller never has to wrangle `git`.
     """
-    diff = get_commit_diff(commit_id, repo=repo)
+    if base:
+        diff = get_range_diff(base, commit_id, repo=repo)
+    else:
+        diff = get_commit_diff(commit_id, repo=repo)
     result = scan_governance(diff, benchmark_responses)
     result["commit_id"] = commit_id
+    result["base"] = base
     return result
 
 

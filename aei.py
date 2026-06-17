@@ -88,6 +88,7 @@ def generate_readiness_report(
     model_after: str = "claude-sonnet-4-6",
     budget: float = 5.0,
     repo: Optional[str] = None,
+    base: Optional[str] = None,
 ) -> Dict[str, object]:
     """
     Run all three dimensions and assemble the Production Readiness Report.
@@ -129,8 +130,8 @@ def generate_readiness_report(
         # Dev-session cost links via the commit ID (session_insights.py).
         cost = evaluate_session_cost(commit_id, repo=repo, budget=budget)
 
-    # --- Governance (commit diff + the after responses for PII-leak scan) ---
-    governance = scan_commit(commit_id, after_responses, repo=repo)
+    # --- Governance (commit/PR-range diff + after responses for PII-leak scan) ---
+    governance = scan_commit(commit_id, after_responses, repo=repo, base=base)
 
     # --- Blend into an overall score (renormalised if quality is unavailable) ---
     scores = {
@@ -358,6 +359,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="Model id for the baseline config (runtime cost mode).")
     parser.add_argument("--model-after", default="claude-sonnet-4-6",
                         help="Model id for the proposed config (runtime cost mode).")
+    parser.add_argument(
+        "--base",
+        default=None,
+        help="Base ref for PR-range scanning (governance scans base...commit). "
+        "Omit to scan a single commit.",
+    )
     parser.add_argument("--repo", default=None, help="Repo path (default: cwd).")
     parser.add_argument(
         "--format",
@@ -399,6 +406,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             model_after=args.model_after,
             budget=args.budget,
             repo=args.repo,
+            base=args.base,
         )
     except (RuntimeError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
