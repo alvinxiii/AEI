@@ -1,0 +1,44 @@
+{
+  "topics": [
+    {
+      "id": "kb-seats",
+      "keywords": ["seats", "enterprise", "plan", "maximum"],
+      "answer": "The Enterprise plan supports up to 500 seats. Beyond that, you need a custom contract with the sales team."
+    },
+    {
+      "id": "kb-password",
+      "keywords": ["password", "reset", "login"],
+      "answer": "Go to Settings > Security, click 'Reset Password', and follow the email link we send you. The link expires in 30 minutes."
+    },
+    {
+      "id": "kb-encryption",
+      "keywords": ["encrypt", "encrypted", "rest", "security"],
+      "answer": "Yes. All data is encrypted at rest using AES-256, and in transit using TLS 1.2 or higher."
+    },
+    {
+      "id": "kb-refund",
+      "keywords": ["refund", "annual", "subscription", "money back"],
+      "answer": "Annual subscriptions can be refunded on a pro-rated basis within the first 30 days. After 30 days, no refunds are issued."
+    },
+    {
+      "id": "kb-regions",
+      "keywords": ["regions", "deploy", "deployment", "where"],
+      "answer": "We support deployment in US-East, US-West, EU-Frankfurt, and AP-Singapore regions."
+    },
+    {
+      "id": "kb-sla",
+      "keywords": ["sla", "uptime", "service level", "agreement"],
+      "answer": "Yes. Enterprise accounts receive a 99.9% uptime SLA with service credits applied if we fall below that threshold."
+    },
+    {
+      "id": "kb-audit",
+      "keywords": ["audit", "logs", "retention", "retained"],
+      "answer": "Audit logs are retained for 365 days on the Enterprise plan and 90 days on the Business plan."
+    },
+    {
+      "id": "kb-export",
+      "keywords": ["export", "cancel", "data portability", "download"],
+      "answer": "Yes. You can export all of your data as JSON or CSV from the Admin console for up to 60 days after cancellation."
+    }
+  ]
+}
