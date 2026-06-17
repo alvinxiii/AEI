@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from typing import Callable, Dict, List, Optional
 
@@ -328,6 +329,71 @@ def render_markdown(report: Dict[str, object]) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# GitHub PR comment
+# --------------------------------------------------------------------------- #
+
+def detect_pr_for_commit(commit_id: str, *, repo: Optional[str] = None) -> Optional[str]:
+    """
+    Resolve the PR number a commit belongs to by asking GitHub (the commit
+    itself carries no PR link). Best-effort: returns the PR number as a string,
+    or None if gh is unavailable, the lookup fails, or no PR is associated.
+    """
+    cmd = ["gh", "pr", "list", "--search", str(commit_id), "--state", "all",
+           "--json", "number", "--jq", ".[0].number"]
+    if repo:
+        cmd += ["--repo", repo]
+    try:
+        result = subprocess.run(
+            cmd, text=True, encoding="utf-8", capture_output=True,
+        )
+    except (OSError, ValueError):
+        return None
+    if result.returncode != 0:
+        return None
+    number = (result.stdout or "").strip()
+    return number or None
+
+
+def post_pr_comment(
+    pr: str,
+    body: str,
+    *,
+    repo: Optional[str] = None,
+) -> bool:
+    """
+    Post `body` as a comment on PR `pr` via the `gh` CLI.
+
+    Best-effort: any failure (gh not installed, not authenticated, no network,
+    bad PR number) is reported to stderr and swallowed so it never blocks the
+    readiness verdict. Returns True on success, False if it was skipped.
+    """
+    cmd = ["gh", "pr", "comment", str(pr), "--body-file", "-"]
+    if repo:
+        cmd += ["--repo", repo]
+    try:
+        result = subprocess.run(
+            cmd,
+            input=body,
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+        )
+    except (OSError, ValueError) as exc:  # gh missing, etc.
+        print(f"warning: skipped PR comment ({type(exc).__name__}: {exc})",
+              file=sys.stderr)
+        return False
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        print(f"warning: skipped PR comment (gh exited {result.returncode}: {detail})",
+              file=sys.stderr)
+        return False
+
+    print(f"posted readiness report to PR #{pr}", file=sys.stderr)
+    return True
+
+
+# --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
 
@@ -366,6 +432,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         "Omit to scan a single commit.",
     )
     parser.add_argument("--repo", default=None, help="Repo path (default: cwd).")
+    parser.add_argument(
+        "--pr",
+        default=None,
+        help="PR number (or URL) to post the Markdown report to via `gh pr comment`. "
+        "If omitted, AEI auto-detects the PR for --commit. Failures are skipped, "
+        "never blocking the verdict.",
+    )
+    parser.add_argument(
+        "--no-comment",
+        action="store_true",
+        help="Disable PR commenting entirely (skip both --pr and auto-detection).",
+    )
     parser.add_argument(
         "--format",
         choices=["text", "markdown", "json"],
@@ -428,6 +506,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(rendered)
     else:
         _print_report(report)
+
+    # Optionally post the report to a PR. The PR is taken from --pr, else
+    # auto-detected from the commit. Best-effort: a failure (or no PR found) is
+    # logged to stderr and skipped so it never changes the gating verdict below.
+    if not args.no_comment:
+        pr = args.pr or detect_pr_for_commit(args.commit)
+        if pr:
+            post_pr_comment(pr, render_markdown(report))
+        elif args.pr is None:
+            print("note: no PR found for commit; skipping PR comment",
+                  file=sys.stderr)
 
     # Exit code mirrors the verdict so CI can gate on it.
     return {"APPROVE": 0, "REVIEW": 0, "BLOCK": 2}.get(report["verdict"], 1)
