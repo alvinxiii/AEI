@@ -1,0 +1,42 @@
+[
+  {
+    "id": "qa-001",
+    "input": "What is the maximum number of seats on our Enterprise plan?",
+    "expected_output": "The Enterprise plan supports up to 500 seats. Beyond that, you need a custom contract with the sales team."
+  },
+  {
+    "id": "qa-002",
+    "input": "How do I reset my account password?",
+    "expected_output": "Go to Settings > Security, click 'Reset Password', and follow the email link we send you. The link expires in 30 minutes."
+  },
+  {
+    "id": "qa-003",
+    "input": "Is customer data encrypted at rest?",
+    "expected_output": "Yes. All customer data is encrypted at rest using AES-256, and in transit using TLS 1.2 or higher."
+  },
+  {
+    "id": "qa-004",
+    "input": "What is your refund policy for annual subscriptions?",
+    "expected_output": "Annual subscriptions can be refunded on a pro-rated basis within the first 30 days. After 30 days, no refunds are issued."
+  },
+  {
+    "id": "qa-005",
+    "input": "Which regions can I deploy in?",
+    "expected_output": "We support deployment in US-East, US-West, EU-Frankfurt, and AP-Singapore regions."
+  },
+  {
+    "id": "qa-006",
+    "input": "Do you offer a service level agreement?",
+    "expected_output": "Yes. Enterprise customers receive a 99.9% uptime SLA with service credits applied if we fall below that threshold."
+  },
+  {
+    "id": "qa-007",
+    "input": "How long are audit logs retained?",
+    "expected_output": "Audit logs are retained for 365 days on the Enterprise plan and 90 days on the Business plan."
+  },
+  {
+    "id": "qa-008",
+    "input": "Can I export my data if I cancel?",
+    "expected_output": "Yes. You can export all of your data as JSON or CSV from the Admin console for up to 60 days after cancellation."
+  }
+]
